@@ -21,34 +21,40 @@ MAKE_CATEGORIES_LOADABLE(UIScrollView_KIFAdditions)
 - (void)scrollViewToVisible:(UIView *)view animated:(BOOL)animated;
 {
     BOOL needsUpdate = NO;
-    CGRect frame = [self.window convertRect:self.frame fromView:self.superview];
-    
-    CGRect viewFrame = [self.window convertRect:view.frame fromView:view.superview];
-    CGFloat viewMaxX = viewFrame.origin.x + viewFrame.size.width;
-    CGFloat viewMaxY = viewFrame.origin.y + viewFrame.size.height;
-    CGFloat scrollViewMaxX = frame.origin.x + frame.size.width;
-    CGFloat scrollViewMaxY = frame.origin.y + frame.size.height;
-    
+    [view layoutSubviews];
+
+    CGRect scrollFrame = self.frame;
+
+    CGPoint viewOrigin = [self.window convertPoint:view.frame.origin fromView:view.superview];
+    CGPoint scrollOrigin = [self.window convertPoint:scrollFrame.origin fromView:self.superview];
+
+    CGPoint viewOuterCorner = CGPointMake(viewOrigin.x + view.frame.size.width, viewOrigin.y + view.frame.size.height);
+    CGPoint scrollOuterCorner = CGPointMake(scrollOrigin.x + scrollFrame.size.width, scrollOrigin.y + scrollFrame.size.height);
+
     CGPoint offsetPoint = self.contentOffset;
-    if (viewMaxX > scrollViewMaxX) {
-        // The view is to the right of the view port, so scroll it just into view
-        offsetPoint.x = frame.origin.x + (viewMaxX - scrollViewMaxX);
-        needsUpdate = YES;
-    } else if (viewMaxX < 0.0) {
-        offsetPoint.x = viewFrame.origin.x;
-        needsUpdate = YES;
-    }
-    
-    if (viewMaxY > scrollViewMaxY) {
-        // The view is below the view port, so scroll it just into view
-        offsetPoint.y = frame.origin.y + (viewMaxY - scrollViewMaxY);
-        needsUpdate = YES;
-    } else if (viewMaxY < 0.0) {
-        offsetPoint.y = viewFrame.origin.y;
+
+    if (viewOuterCorner.x > scrollOuterCorner.x || viewOrigin.x < scrollOrigin.x) {
+        // The view is to the right of the view port, scroll it into view
+        CGPoint windowOffset = CGPointMake(viewOrigin.x, 0);
+        windowOffset = [self.window convertPoint:windowOffset toView:self];
+
+        offsetPoint.x = windowOffset.x;
         needsUpdate = YES;
     }
-    
+
+    if (viewOuterCorner.y > scrollOuterCorner.y || viewOrigin.y < scrollOrigin.y) {
+        // The view is below the view port, so scroll it into view
+        CGPoint windowOffset = CGPointMake(0, viewOrigin.y);
+        windowOffset = [self.window convertPoint:windowOffset toView:self];
+
+        offsetPoint.y = windowOffset.y;
+        needsUpdate = YES;
+    }
+
     if (needsUpdate) {
+        offsetPoint.x = MIN(offsetPoint.x, self.contentSize.width - scrollFrame.size.width);
+        offsetPoint.y = MIN(offsetPoint.y, self.contentSize.height - scrollFrame.size.height);
+
         [self setContentOffset:offsetPoint animated:animated];
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.2, false);
     }
