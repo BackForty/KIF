@@ -13,6 +13,9 @@
 @property (weak, nonatomic) IBOutlet UILabel *memoryWarningLabel;
 @property (weak, nonatomic) IBOutlet UITextField *otherTextField;
 @property (weak, nonatomic) IBOutlet UITextField *greetingTextField;
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (weak, nonatomic) IBOutlet UIView *buttonContainerView;
+
 @end
 
 @implementation TapViewController
@@ -21,6 +24,11 @@
 {
     [super viewDidLoad];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(memoryWarningNotification:) name:UIApplicationDidReceiveMemoryWarningNotification object:[UIApplication sharedApplication]];
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    CGRect buttonContainerFrame = self.buttonContainerView.frame;
+    self.scrollView.contentSize = CGSizeMake(CGRectGetMaxX(buttonContainerFrame), CGRectGetMaxY(buttonContainerFrame));
 }
 
 - (void)memoryWarningNotification:(NSNotification *)notification
